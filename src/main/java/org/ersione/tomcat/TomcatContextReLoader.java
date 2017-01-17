@@ -49,35 +49,33 @@ public class TomcatContextReLoader extends ValveBase {
 
     @Override
     public void invoke(Request request, Response response) throws IOException, ServletException {
-        LOGGER.info("invoke");
         Container container = this.getContainer();
         String requestUri = request.getRequestURI();
         String keyParam = request.getParameter("key");
 
-        LOGGER.info(requestUri);
-
         if (requestUri.endsWith(RELOAD_CONTEXT_URI) && keyParam != null && !keyParam.isEmpty()) {
-            LOGGER.info(keyParam);
             if (container instanceof Host) {
-                LOGGER.info("HOST");
                 String contextParam = request.getParameter("context");
                 if (contextParam != null) {
                     Context context = (Context) container.findChild(contextParam);
                     if (context != null) {
                         if (otpUtil.verify(keyParam)) {
                             this.reloadContext(response, context);
+                            return;
                         } else {
                             this.invalidKey(response, context);
+                            return;
                         }
                     }
                 }
             } else if (container instanceof Context && requestUri.startsWith(request.getContextPath() + RELOAD_CONTEXT_URI)) {
-                LOGGER.info("CONTAINER");
                 Context context = (Context) container;
                 if (otpUtil.verify(keyParam)) {
                     this.reloadContext(response, context);
+                    return;
                 } else {
                     this.invalidKey(response, context);
+                    return;
                 }
             }
         }
